@@ -362,44 +362,51 @@ public class SpringPlugin implements LoadtimeInstrumentationPlugin, ReloadEventP
 			}
 			try {
 				Class<?> clazz_AbstractHandlerMethodMapping = o.getClass().getSuperclass().getSuperclass();
+				Field[] declaredFields = clazz_AbstractHandlerMethodMapping.getDeclaredFields();
 
 				// private final Map<T, HandlerMethod> handlerMethods = new LinkedHashMap<T, HandlerMethod>();
-				Field field_handlerMethods = clazz_AbstractHandlerMethodMapping.getDeclaredField("handlerMethods");
-				field_handlerMethods.setAccessible(true);
-				Map m = (Map) field_handlerMethods.get(o);
-				m.clear();
+				Field field_handlerMethods = findField(declaredFields, "handlerMethods");
+				if (field_handlerMethods != null) {
+					field_handlerMethods.setAccessible(true);
+					Map m = (Map) field_handlerMethods.get(o);
+					m.clear();
+				}
 
-				Field field_urlMap = clazz_AbstractHandlerMethodMapping.getDeclaredField("urlMap");
-				field_urlMap.setAccessible(true);
-				m = (Map) field_urlMap.get(o);
-				m.clear();
+				// private final MultiValueMap<String, T> urlMap = new LinkedMultiValueMap<String, T>();
+				Field field_urlMap = findField(declaredFields, "urlMap");
+				if (field_urlMap != null) {
+					field_urlMap.setAccessible(true);
+					Map m = (Map) field_urlMap.get(o);
+					m.clear();
+				}
 
-				Field field_nameMap = clazz_AbstractHandlerMethodMapping.getDeclaredField("nameMap");
-				field_nameMap.setAccessible(true);
-				m = (Map) field_nameMap.get(o);
-				m.clear();
+				// private final MultiValueMap<String, HandlerMethod> nameMap = new LinkedMultiValueMap<String, HandlerMethod>();
+				Field field_nameMap = findField(declaredFields, "nameMap");
+				if (field_nameMap != null) {
+					field_nameMap.setAccessible(true);
+					Map m = (Map) field_nameMap.get(o);
+					m.clear();
+				}
 
 				Method method_initHandlerMethods = clazz_AbstractHandlerMethodMapping.getDeclaredMethod("initHandlerMethods");
 				method_initHandlerMethods.setAccessible(true);
 				method_initHandlerMethods.invoke(o);
 			}
-			catch (NoSuchFieldException nsfe) {
-				if (debug) {
-					if (nsfe.getMessage().equals("handlerMethods")) {
-						System.out.println("problem resetting request mapping handlers - unable to find field 'handlerMethods' on type 'AbstractHandlerMethodMapping' - you probably are not on Spring 3.1");
-					}
-					else {
-						System.out.println("problem resetting request mapping handlers - NoSuchFieldException: "
-								+ nsfe.getMessage());
-					}
-				}
-			}
-			catch (Exception e) {
+                        catch (Exception e) {
 				if (GlobalConfiguration.debugplugins) {
 					e.printStackTrace();
 				}
 			}
 		}
+	}
+
+	private static Field findField(Field[] fields, String name) {
+		for (Field field : fields) {
+			if (field.getName().equals(name)) {
+				return field;
+			}
+		}
+		return null;
 	}
 
 	public boolean shouldRerunStaticInitializer(String typename, Class<?> clazz, String encodedTimestamp) {
