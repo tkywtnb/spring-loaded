@@ -374,6 +374,11 @@ public class SpringPlugin implements LoadtimeInstrumentationPlugin, ReloadEventP
 				m = (Map) field_urlMap.get(o);
 				m.clear();
 
+				Field field_nameMap = clazz_AbstractHandlerMethodMapping.getDeclaredField("nameMap");
+				field_nameMap.setAccessible(true);
+				m = (Map) field_nameMap.get(o);
+				m.clear();
+
 				Method method_initHandlerMethods = clazz_AbstractHandlerMethodMapping.getDeclaredMethod("initHandlerMethods");
 				method_initHandlerMethods.setAccessible(true);
 				method_initHandlerMethods.invoke(o);
